@@ -6,10 +6,10 @@
 
 const browserAPI = typeof browser !== 'undefined' ? browser : (typeof chrome !== 'undefined' ? chrome : null);
 
-// Import scripts if running in Web Worker (MV3)
+// Import scripts if running in Web Worker / Service Worker (MV3)
 if (typeof importScripts === 'function') {
   try {
-    importScripts('../common/badges-data.js', '../common/streak-manager.js', '../common/storage.js');
+    importScripts('/common/badges-data.js', '/common/streak-manager.js', '/common/storage.js');
   } catch (e) {
     console.error('importScripts error:', e);
   }
