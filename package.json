@@ -4,7 +4,7 @@
   "description": "Firefox add-on to track AWS Builder Center badge progress, daily/weekly streaks, and missed days.",
   "scripts": {
     "test": "node --test test/*.test.js",
-    "build": "mkdir -p dist && zip -r -FS dist/aws-builder-badges-addon.zip manifest.json icons/ common/ background/ popup/ content/ -x '*.DS_Store' '*__MACOSX*'"
+    "build": "node scripts/build.js"
   },
   "keywords": [
     "firefox-addon",

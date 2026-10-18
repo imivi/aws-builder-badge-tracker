@@ -2,6 +2,8 @@
 
 This is a browser add-on that tracks badge progress on the AWS Builder Center website: https://builder.aws.com/profile?tab=badges
 
+![AWS Builder Badge Tracker Screenshot](https://raw.githubusercontent.com/imivi/aws-builder-badge-tracker/main/docs/screenshot.png)
+
 Tracking badges progress is useful because AWS offers generous rewards:
 
 ## Rewards
@@ -54,18 +56,26 @@ The add-on also alerts the user if a day or week has been missed.
 
 ## Installation in Firefox
 
-### Loading as Temporary Add-on (Development)
+### Loading as Temporary Add-on (Firefox)
 1. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`.
 2. Click **Load Temporary Add-on...**
-3. Select the [manifest.json](file:///home/imivi/Dev/aws-builder-badges-addon/manifest.json) file or [dist/aws-builder-badges-addon.zip](file:///home/imivi/Dev/aws-builder-badges-addon/dist/aws-builder-badges-addon.zip).
-4. The AWS Builder Badges icon will appear in your Firefox toolbar.
+3. Select [dist/firefox/manifest.json](file:///home/imivi/Dev/aws-builder-badges-addon/dist/firefox/manifest.json) or [dist/aws-builder-badges-firefox.zip](file:///home/imivi/Dev/aws-builder-badges-addon/dist/aws-builder-badges-firefox.zip).
 
-### Building Distribution Package
-Run the build script to generate a `.zip` WebExtension bundle in the `dist/` directory:
+### Loading in Google Chrome / Chromium
+1. Open Chrome and navigate to `chrome://extensions`.
+2. Enable **Developer mode** toggle in the top-right corner.
+3. Click **Load unpacked**.
+4. Select the unpacked directory: [dist/chrome](file:///home/imivi/Dev/aws-builder-badges-addon/dist/chrome).
+
+### Building Distribution Packages
+Run the build script to generate packages for both Firefox and Chrome:
 ```bash
 npm run build
 ```
-This produces `dist/aws-builder-badges-addon.zip` ready for submission to Mozilla Add-ons (AMO) or temporary loading.
+This produces:
+- `dist/aws-builder-badges-firefox.zip` (and `dist/firefox/`)
+- `dist/aws-builder-badges-chrome.zip` (and `dist/chrome/`)
+- `dist/aws-builder-badges-addon.zip` (default bundle)
 
 ## Architecture & Components
 
