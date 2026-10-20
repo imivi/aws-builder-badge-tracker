@@ -60,6 +60,28 @@ The add-on also alerts the user if a day or week has been missed.
 1. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`.
 2. Click **Load Temporary Add-on...**
 3. Select [dist/firefox/manifest.json](file:///home/imivi/Dev/aws-builder-badges-addon/dist/firefox/manifest.json) or [dist/aws-builder-badges-firefox.zip](file:///home/imivi/Dev/aws-builder-badges-addon/dist/aws-builder-badges-firefox.zip).
+*(Note: Temporary add-ons are removed when Firefox restarts).*
+
+### Permanent Installation in Firefox (Unlisted Self-Distribution)
+To keep the extension permanently installed without publishing it publicly on the Firefox Add-ons store:
+
+1. Build the distribution package:
+   ```bash
+   npm run build
+   ```
+2. Go to the [Mozilla Add-on Developer Hub](https://addons.mozilla.org/developers/) and log in with your Firefox account.
+3. Click **Submit a New Add-on**.
+4. Select **"On your own"** (self-distribution / unlisted) so it will **not** be listed or searchable publicly on AMO.
+5. Upload `dist/aws-builder-badges-firefox.zip`.
+6. Once the automated review completes (usually 1–5 minutes), download the signed `.xpi` file.
+7. In Firefox, open `about:addons`, click the gear icon (⚙️) -> **Install Add-on From File...** (or drag and drop the `.xpi` into any Firefox window) and confirm installation.
+   - The add-on remains permanently installed across browser restarts and updates.
+
+> **Tip (Automated Signing with `web-ext`):**
+> You can also sign directly from the command line using an AMO API Key & Secret:
+> ```bash
+> npx web-ext sign --source-dir dist/firefox --api-key="YOUR_KEY" --api-secret="YOUR_SECRET"
+> ```
 
 ### Loading in Google Chrome / Chromium
 1. Open Chrome and navigate to `chrome://extensions`.
