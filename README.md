@@ -63,19 +63,31 @@ The add-on also alerts the user if a day or week has been missed.
 *(Note: Temporary add-ons are removed when Firefox restarts).*
 
 ### Permanent Installation in Firefox (Unlisted Self-Distribution)
-To keep the extension permanently installed without publishing it publicly on the Firefox Add-ons store:
+To keep the extension permanently installed across browser restarts without publishing it publicly on the Firefox Add-ons store:
 
+#### 1. Submit for Automated Signing
 1. Build the distribution package:
    ```bash
    npm run build
    ```
-2. Go to the [Mozilla Add-on Developer Hub](https://addons.mozilla.org/developers/) and log in with your Firefox account.
+2. Navigate to your [Mozilla Add-ons Developer Hub](https://addons.mozilla.org/en-US/developers/addons).
 3. Click **Submit a New Add-on**.
 4. Select **"On your own"** (self-distribution / unlisted) so it will **not** be listed or searchable publicly on AMO.
 5. Upload `dist/aws-builder-badges-firefox.zip`.
-6. Once the automated review completes (usually 1–5 minutes), download the signed `.xpi` file.
-7. In Firefox, open `about:addons`, click the gear icon (⚙️) -> **Install Add-on From File...** (or drag and drop the `.xpi` into any Firefox window) and confirm installation.
-   - The add-on remains permanently installed across browser restarts and updates.
+6. When asked about code generators, minifiers, or bundlers, select **"No"**.
+
+#### 2. Download the Signed `.xpi` File
+1. Go to [https://addons.mozilla.org/en-US/developers/addons](https://addons.mozilla.org/en-US/developers/addons).
+2. Click on **AWS Builder Badges Tracker** in your add-ons list.
+3. In the left-hand sidebar menu, select **Manage Status & Versions**.
+4. Click on your approved version number (e.g., **1.0.0**).
+5. Click the download link ending in **`.xpi`** (e.g., `aws_builder_badges_tracker-1.0.0.xpi`) to save it locally.
+
+#### 3. Install the `.xpi` into Firefox
+- **Option A (Drag & Drop):** Drag and drop the downloaded `.xpi` file into any open Firefox browser window, then click **Add**.
+- **Option B (Via Add-ons Manager):** Open `about:addons` in Firefox, click the gear icon (⚙️) in the upper-right corner, select **Install Add-on From File...**, and select your downloaded `.xpi`.
+
+The extension is now permanently installed and will persist across browser restarts, updates, and reboots.
 
 > **Tip (Automated Signing with `web-ext`):**
 > You can also sign directly from the command line using an AMO API Key & Secret:
