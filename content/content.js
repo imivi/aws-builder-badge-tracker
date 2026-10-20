@@ -45,36 +45,71 @@
     }, 3000);
   }
 
+  function clearChildren(element) {
+    while (element.firstChild) {
+      element.removeChild(element.firstChild);
+    }
+  }
+
   function initFloatingWidget() {
     if (document.getElementById('aws-badge-tracker-root')) return;
 
     const root = document.createElement('div');
     root.id = 'aws-badge-tracker-root';
 
-    root.innerHTML = `
-      <div class="aws-tracker-drawer" id="aws-tracker-drawer">
-        <div class="aws-tracker-drawer-header">
-          <div class="aws-tracker-drawer-title">
-            <span>🏅</span> AWS Builder Badges
-          </div>
-          <button class="aws-tracker-drawer-close" id="aws-tracker-close-btn">&times;</button>
-        </div>
-        <div class="aws-tracker-drawer-list" id="aws-tracker-drawer-items">
-          <!-- Populated from storage -->
-        </div>
-      </div>
-      <button class="aws-tracker-pill-btn" id="aws-tracker-pill">
-        <span class="aws-tracker-icon">⚡</span>
-        <span>Builder Badges</span>
-        <span class="aws-tracker-badge-counter" id="aws-tracker-counter">...</span>
-      </button>
-    `;
+    // Drawer
+    const drawer = document.createElement('div');
+    drawer.className = 'aws-tracker-drawer';
+    drawer.id = 'aws-tracker-drawer';
 
+    const header = document.createElement('div');
+    header.className = 'aws-tracker-drawer-header';
+
+    const title = document.createElement('div');
+    title.className = 'aws-tracker-drawer-title';
+
+    const titleIcon = document.createElement('span');
+    titleIcon.textContent = '🏅';
+    title.appendChild(titleIcon);
+    title.appendChild(document.createTextNode(' AWS Builder Badges'));
+    header.appendChild(title);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'aws-tracker-drawer-close';
+    closeBtn.id = 'aws-tracker-close-btn';
+    closeBtn.textContent = '×';
+    header.appendChild(closeBtn);
+    drawer.appendChild(header);
+
+    const drawerList = document.createElement('div');
+    drawerList.className = 'aws-tracker-drawer-list';
+    drawerList.id = 'aws-tracker-drawer-items';
+    drawer.appendChild(drawerList);
+
+    root.appendChild(drawer);
+
+    // Pill Button
+    const pill = document.createElement('button');
+    pill.className = 'aws-tracker-pill-btn';
+    pill.id = 'aws-tracker-pill';
+
+    const pillIcon = document.createElement('span');
+    pillIcon.className = 'aws-tracker-icon';
+    pillIcon.textContent = '⚡';
+    pill.appendChild(pillIcon);
+
+    const pillText = document.createElement('span');
+    pillText.textContent = 'Builder Badges';
+    pill.appendChild(pillText);
+
+    const counterSpan = document.createElement('span');
+    counterSpan.className = 'aws-tracker-badge-counter';
+    counterSpan.id = 'aws-tracker-counter';
+    counterSpan.textContent = '...';
+    pill.appendChild(counterSpan);
+
+    root.appendChild(pill);
     document.body.appendChild(root);
-
-    const pill = document.getElementById('aws-tracker-pill');
-    const drawer = document.getElementById('aws-tracker-drawer');
-    const closeBtn = document.getElementById('aws-tracker-close-btn');
 
     pill.addEventListener('click', () => {
       drawer.classList.toggle('open');
@@ -148,7 +183,7 @@
         { id: 'daily_like', label: 'Like Content', icon: '👍' }
       ];
 
-      list.innerHTML = '';
+      clearChildren(list);
       for (const item of items) {
         const act = state.activities && state.activities[item.id];
         const isDone = act && act.lastCompletedDate === todayKey;
@@ -156,15 +191,26 @@
 
         const row = document.createElement('div');
         row.className = 'aws-tracker-drawer-item';
-        row.innerHTML = `
-          <div>
-            <span>${item.icon} ${item.label}</span>
-            <div style="font-size: 10px; color: #fb923c; margin-top: 1px;">Streak: ${streak}d</div>
-          </div>
-          <div class="aws-tracker-drawer-check ${isDone ? 'checked' : ''}" data-item-id="${item.id}"></div>
-        `;
 
-        const checkEl = row.querySelector('.aws-tracker-drawer-check');
+        const labelDiv = document.createElement('div');
+
+        const titleSpan = document.createElement('span');
+        titleSpan.textContent = `${item.icon} ${item.label}`;
+        labelDiv.appendChild(titleSpan);
+
+        const streakDiv = document.createElement('div');
+        streakDiv.style.fontSize = '10px';
+        streakDiv.style.color = '#fb923c';
+        streakDiv.style.marginTop = '1px';
+        streakDiv.textContent = `Streak: ${streak}d`;
+        labelDiv.appendChild(streakDiv);
+
+        row.appendChild(labelDiv);
+
+        const checkEl = document.createElement('div');
+        checkEl.className = `aws-tracker-drawer-check ${isDone ? 'checked' : ''}`;
+        checkEl.setAttribute('data-item-id', item.id);
+
         checkEl.addEventListener('click', async () => {
           // Toggle activity
           const target = !isDone;
@@ -189,6 +235,7 @@
           updatePillCounter();
         });
 
+        row.appendChild(checkEl);
         list.appendChild(row);
       }
     } catch (e) {

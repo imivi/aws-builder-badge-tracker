@@ -141,6 +141,12 @@ function renderAll() {
   renderSettings();
 }
 
+function clearChildren(element) {
+  while (element.firstChild) {
+    element.removeChild(element.firstChild);
+  }
+}
+
 function renderChecklist(summary, now) {
   const dailyContainer = document.getElementById('daily-activities-list');
   const weeklyContainer = document.getElementById('weekly-activities-list');
@@ -150,8 +156,8 @@ function renderChecklist(summary, now) {
   const thisWeekMonday = summary.thisWeekMonday;
   const activities = getActivities();
 
-  dailyContainer.innerHTML = '';
-  weeklyContainer.innerHTML = '';
+  clearChildren(dailyContainer);
+  clearChildren(weeklyContainer);
 
   for (const actDef of activities) {
     const act = (appState.activities && appState.activities[actDef.id]) || { currentStreak: 0, longestStreak: 0, lastCompletedDate: null };
@@ -164,35 +170,78 @@ function renderChecklist(summary, now) {
     const periodUnit = isDaily ? 'day' : 'week';
     const streakSuffix = act.currentStreak === 1 ? periodUnit : `${periodUnit}s`;
 
-    itemEl.innerHTML = `
-      <div class="activity-main">
-        <span class="activity-icon">${actDef.icon}</span>
-        <div class="activity-details">
-          <div class="activity-name-row">
-            <span class="activity-name">${actDef.name}</span>
-            <a href="${actDef.url}" target="_blank" rel="noopener noreferrer" class="activity-link" title="Open in Builder Center">↗</a>
-          </div>
-          <span class="activity-sub">${actDef.actionDesc}</span>
-          <div style="margin-top: 3px;">
-            <span class="activity-streak-tag">
-              🔥 ${act.currentStreak} ${streakSuffix} streak
-              ${act.longestStreak > act.currentStreak ? `<span style="opacity:0.75; font-size:10px;">(Best: ${act.longestStreak})</span>` : ''}
-            </span>
-          </div>
-        </div>
-      </div>
-      <div class="activity-check-toggle">
-        <div class="custom-checkbox ${isCompleted ? 'checked' : ''}" data-act-id="${actDef.id}" title="${isCompleted ? 'Mark uncompleted' : 'Mark done'}"></div>
-      </div>
-    `;
+    // Activity Main
+    const mainDiv = document.createElement('div');
+    mainDiv.className = 'activity-main';
 
-    const checkbox = itemEl.querySelector('.custom-checkbox');
-    if (checkbox) {
-      checkbox.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        await handleToggleActivity(actDef.id);
-      });
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'activity-icon';
+    iconSpan.textContent = actDef.icon;
+    mainDiv.appendChild(iconSpan);
+
+    const detailsDiv = document.createElement('div');
+    detailsDiv.className = 'activity-details';
+
+    const nameRow = document.createElement('div');
+    nameRow.className = 'activity-name-row';
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'activity-name';
+    nameSpan.textContent = actDef.name;
+    nameRow.appendChild(nameSpan);
+
+    const linkA = document.createElement('a');
+    linkA.href = actDef.url;
+    linkA.target = '_blank';
+    linkA.rel = 'noopener noreferrer';
+    linkA.className = 'activity-link';
+    linkA.title = 'Open in Builder Center';
+    linkA.textContent = '↗';
+    nameRow.appendChild(linkA);
+
+    detailsDiv.appendChild(nameRow);
+
+    const subSpan = document.createElement('span');
+    subSpan.className = 'activity-sub';
+    subSpan.textContent = actDef.actionDesc;
+    detailsDiv.appendChild(subSpan);
+
+    const streakWrap = document.createElement('div');
+    streakWrap.style.marginTop = '3px';
+
+    const streakTag = document.createElement('span');
+    streakTag.className = 'activity-streak-tag';
+    streakTag.textContent = `🔥 ${act.currentStreak} ${streakSuffix} streak`;
+
+    if (act.longestStreak > act.currentStreak) {
+      const bestSpan = document.createElement('span');
+      bestSpan.style.opacity = '0.75';
+      bestSpan.style.fontSize = '10px';
+      bestSpan.textContent = ` (Best: ${act.longestStreak})`;
+      streakTag.appendChild(bestSpan);
     }
+    streakWrap.appendChild(streakTag);
+    detailsDiv.appendChild(streakWrap);
+
+    mainDiv.appendChild(detailsDiv);
+    itemEl.appendChild(mainDiv);
+
+    // Check Toggle
+    const toggleDiv = document.createElement('div');
+    toggleDiv.className = 'activity-check-toggle';
+
+    const checkbox = document.createElement('div');
+    checkbox.className = `custom-checkbox ${isCompleted ? 'checked' : ''}`;
+    checkbox.setAttribute('data-act-id', actDef.id);
+    checkbox.title = isCompleted ? 'Mark uncompleted' : 'Mark done';
+
+    checkbox.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      await handleToggleActivity(actDef.id);
+    });
+
+    toggleDiv.appendChild(checkbox);
+    itemEl.appendChild(toggleDiv);
 
     if (isDaily) {
       dailyContainer.appendChild(itemEl);
@@ -253,14 +302,21 @@ function renderBadges() {
     return true;
   });
 
-  grid.innerHTML = '';
+  clearChildren(grid);
   if (filtered.length === 0) {
-    grid.innerHTML = `
-      <div class="empty-state">
-        <span class="empty-icon">🔍</span>
-        <p>No badges match your filter or search query.</p>
-      </div>
-    `;
+    const emptyState = document.createElement('div');
+    emptyState.className = 'empty-state';
+
+    const emptyIcon = document.createElement('span');
+    emptyIcon.className = 'empty-icon';
+    emptyIcon.textContent = '🔍';
+    emptyState.appendChild(emptyIcon);
+
+    const emptyText = document.createElement('p');
+    emptyText.textContent = 'No badges match your filter or search query.';
+    emptyState.appendChild(emptyText);
+
+    grid.appendChild(emptyState);
     return;
   }
 
@@ -269,85 +325,150 @@ function renderBadges() {
     const card = document.createElement('div');
     card.className = `badge-card ${badgeState.completed ? 'unlocked' : ''}`;
 
-    let controlHtml = '';
     const currentVal = badgeState.progress || 0;
 
+    // Badge Left
+    const badgeLeft = document.createElement('div');
+    badgeLeft.className = 'badge-left';
+
+    const iconBox = document.createElement('div');
+    iconBox.className = 'badge-icon-box';
+    iconBox.textContent = badge.icon;
+    badgeLeft.appendChild(iconBox);
+
+    const badgeInfo = document.createElement('div');
+    badgeInfo.className = 'badge-info';
+
+    const nameRow = document.createElement('div');
+    nameRow.className = 'badge-name-row';
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'badge-name';
+    nameSpan.textContent = badge.name;
+    nameRow.appendChild(nameSpan);
+
+    if (badgeState.completed) {
+      const statusPill = document.createElement('span');
+      statusPill.className = 'badge-status-pill unlocked';
+      statusPill.textContent = 'Completed ✓';
+      nameRow.appendChild(statusPill);
+    } else if (badge.type === 'streak') {
+      const statusPill = document.createElement('span');
+      statusPill.className = 'badge-status-pill streak';
+      statusPill.textContent = 'Streak';
+      nameRow.appendChild(statusPill);
+    }
+
+    badgeInfo.appendChild(nameRow);
+
+    const goalDiv = document.createElement('div');
+    goalDiv.className = 'badge-goal';
+    goalDiv.textContent = badge.goal;
+    badgeInfo.appendChild(goalDiv);
+
+    badgeLeft.appendChild(badgeInfo);
+    card.appendChild(badgeLeft);
+
+    // Badge Right Controls
+    const badgeRight = document.createElement('div');
+    badgeRight.className = 'badge-right-ctrl';
+
     if (badge.type === 'counter') {
-      controlHtml = `
-        <div class="counter-ctrl-wrap">
-          <button class="counter-btn dec-btn" data-badge-id="${badge.id}">-</button>
-          <span class="counter-val">${currentVal} / ${badge.target}</span>
-          <button class="counter-btn inc-btn" data-badge-id="${badge.id}">+</button>
-        </div>
-        <div class="badge-progress-mini">
-          <div class="badge-progress-mini-fill" style="width: ${Math.min(100, Math.round((currentVal / badge.target) * 100))}%"></div>
-        </div>
-      `;
+      const ctrlWrap = document.createElement('div');
+      ctrlWrap.className = 'counter-ctrl-wrap';
+
+      const decBtn = document.createElement('button');
+      decBtn.className = 'counter-btn dec-btn';
+      decBtn.setAttribute('data-badge-id', badge.id);
+      decBtn.textContent = '-';
+      decBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await handleBadgeCounterChange(badge.id, -1);
+      });
+      ctrlWrap.appendChild(decBtn);
+
+      const valSpan = document.createElement('span');
+      valSpan.className = 'counter-val';
+      valSpan.textContent = `${currentVal} / ${badge.target}`;
+      ctrlWrap.appendChild(valSpan);
+
+      const incBtn = document.createElement('button');
+      incBtn.className = 'counter-btn inc-btn';
+      incBtn.setAttribute('data-badge-id', badge.id);
+      incBtn.textContent = '+';
+      incBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await handleBadgeCounterChange(badge.id, 1);
+      });
+      ctrlWrap.appendChild(incBtn);
+      badgeRight.appendChild(ctrlWrap);
+
+      const progMini = document.createElement('div');
+      progMini.className = 'badge-progress-mini';
+
+      const progMiniFill = document.createElement('div');
+      progMiniFill.className = 'badge-progress-mini-fill';
+      progMiniFill.style.width = `${Math.min(100, Math.round((currentVal / badge.target) * 100))}%`;
+      progMini.appendChild(progMiniFill);
+
+      badgeRight.appendChild(progMini);
     } else if (badge.type === 'streak') {
       const act = (appState.activities && appState.activities[badge.activityId]) || { currentStreak: 0 };
       const currentStreak = act.currentStreak || 0;
       const pct = Math.min(100, Math.round((currentStreak / badge.target) * 100));
 
-      controlHtml = `
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="text-align: right;">
-            <div style="font-size: 11px; font-weight: 700; color: ${badgeState.completed ? 'var(--success)' : 'var(--aws-orange)'};">
-              ${currentStreak} / ${badge.target} ${badge.unit}
-            </div>
-            <div class="badge-progress-mini" style="margin-top: 2px;">
-              <div class="badge-progress-mini-fill" style="width: ${pct}%; background-color: ${badgeState.completed ? 'var(--success)' : 'var(--aws-orange)'};"></div>
-            </div>
-          </div>
-          <div class="custom-checkbox ${badgeState.completed ? 'checked' : ''}" data-badge-checkbox="${badge.id}" title="Manually toggle badge completion"></div>
-        </div>
-      `;
-    } else {
-      controlHtml = `
-        <div class="custom-checkbox ${badgeState.completed ? 'checked' : ''}" data-badge-checkbox="${badge.id}" title="${badgeState.completed ? 'Mark incomplete' : 'Mark complete'}"></div>
-      `;
-    }
+      const streakCtrlWrap = document.createElement('div');
+      streakCtrlWrap.style.display = 'flex';
+      streakCtrlWrap.style.alignItems = 'center';
+      streakCtrlWrap.style.gap = '8px';
 
-    card.innerHTML = `
-      <div class="badge-left">
-        <div class="badge-icon-box">${badge.icon}</div>
-        <div class="badge-info">
-          <div class="badge-name-row">
-            <span class="badge-name">${badge.name}</span>
-            ${badgeState.completed 
-              ? `<span class="badge-status-pill unlocked">Completed ✓</span>` 
-              : (badge.type === 'streak' ? `<span class="badge-status-pill streak">Streak</span>` : '')
-            }
-          </div>
-          <div class="badge-goal">${badge.goal}</div>
-        </div>
-      </div>
-      <div class="badge-right-ctrl">
-        ${controlHtml}
-      </div>
-    `;
+      const progressCol = document.createElement('div');
+      progressCol.style.textAlign = 'right';
 
-    const decBtn = card.querySelector('.dec-btn');
-    const incBtn = card.querySelector('.inc-btn');
-    const checkbox = card.querySelector('[data-badge-checkbox]');
+      const streakText = document.createElement('div');
+      streakText.style.fontSize = '11px';
+      streakText.style.fontWeight = '700';
+      streakText.style.color = badgeState.completed ? 'var(--success)' : 'var(--aws-orange)';
+      streakText.textContent = `${currentStreak} / ${badge.target} ${badge.unit}`;
+      progressCol.appendChild(streakText);
 
-    if (decBtn && incBtn) {
-      decBtn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        await handleBadgeCounterChange(badge.id, -1);
-      });
-      incBtn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        await handleBadgeCounterChange(badge.id, 1);
-      });
-    }
+      const progMini = document.createElement('div');
+      progMini.className = 'badge-progress-mini';
+      progMini.style.marginTop = '2px';
 
-    if (checkbox) {
+      const progMiniFill = document.createElement('div');
+      progMiniFill.className = 'badge-progress-mini-fill';
+      progMiniFill.style.width = `${pct}%`;
+      progMiniFill.style.backgroundColor = badgeState.completed ? 'var(--success)' : 'var(--aws-orange)';
+      progMini.appendChild(progMiniFill);
+      progressCol.appendChild(progMini);
+
+      streakCtrlWrap.appendChild(progressCol);
+
+      const checkbox = document.createElement('div');
+      checkbox.className = `custom-checkbox ${badgeState.completed ? 'checked' : ''}`;
+      checkbox.setAttribute('data-badge-checkbox', badge.id);
+      checkbox.title = 'Manually toggle badge completion';
       checkbox.addEventListener('click', async (e) => {
         e.stopPropagation();
         await handleBadgeCheckboxToggle(badge.id);
       });
+      streakCtrlWrap.appendChild(checkbox);
+
+      badgeRight.appendChild(streakCtrlWrap);
+    } else {
+      const checkbox = document.createElement('div');
+      checkbox.className = `custom-checkbox ${badgeState.completed ? 'checked' : ''}`;
+      checkbox.setAttribute('data-badge-checkbox', badge.id);
+      checkbox.title = badgeState.completed ? 'Mark incomplete' : 'Mark complete';
+      checkbox.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await handleBadgeCheckboxToggle(badge.id);
+      });
+      badgeRight.appendChild(checkbox);
     }
 
+    card.appendChild(badgeRight);
     grid.appendChild(card);
   }
 }
@@ -380,39 +501,60 @@ function renderAlerts() {
 
   const alerts = appState.alerts || [];
 
+  clearChildren(container);
+
   if (alerts.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <span class="empty-icon">🎉</span>
-        <p>No missed streaks! Keep up the daily builder momentum!</p>
-      </div>
-    `;
+    const emptyState = document.createElement('div');
+    emptyState.className = 'empty-state';
+
+    const emptyIcon = document.createElement('span');
+    emptyIcon.className = 'empty-icon';
+    emptyIcon.textContent = '🎉';
+    emptyState.appendChild(emptyIcon);
+
+    const emptyText = document.createElement('p');
+    emptyText.textContent = 'No missed streaks! Keep up the daily builder momentum!';
+    emptyState.appendChild(emptyText);
+
+    container.appendChild(emptyState);
     return;
   }
 
-  container.innerHTML = '';
   for (const alert of alerts) {
     const card = document.createElement('div');
     card.className = `alert-item-card ${alert.dismissed ? 'dismissed' : ''}`;
 
     const dateStr = alert.detectedAt ? new Date(alert.detectedAt).toLocaleDateString() : '';
 
-    card.innerHTML = `
-      <div style="flex: 1;">
-        <div class="alert-item-msg">${alert.message}</div>
-        <div class="alert-item-time">Detected: ${dateStr} ${alert.dismissed ? '• (Dismissed)' : ''}</div>
-      </div>
-      ${!alert.dismissed ? `<button class="action-btn-sm dismiss-item-btn" data-alert-id="${alert.id}">Dismiss</button>` : ''}
-    `;
+    const textDiv = document.createElement('div');
+    textDiv.style.flex = '1';
 
-    const dismissBtn = card.querySelector('.dismiss-item-btn');
-    if (dismissBtn) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'alert-item-msg';
+    msgDiv.textContent = alert.message;
+    textDiv.appendChild(msgDiv);
+
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'alert-item-time';
+    timeDiv.textContent = `Detected: ${dateStr}${alert.dismissed ? ' • (Dismissed)' : ''}`;
+    textDiv.appendChild(timeDiv);
+
+    card.appendChild(textDiv);
+
+    if (!alert.dismissed) {
+      const dismissBtn = document.createElement('button');
+      dismissBtn.className = 'action-btn-sm dismiss-item-btn';
+      dismissBtn.setAttribute('data-alert-id', alert.id);
+      dismissBtn.textContent = 'Dismiss';
+
       dismissBtn.addEventListener('click', async () => {
         const sm = getStreakMgr();
         if (sm) sm.dismissAlert(appState, alert.id);
         await persistState();
         renderAll();
       });
+
+      card.appendChild(dismissBtn);
     }
 
     container.appendChild(card);
@@ -433,7 +575,7 @@ function renderSettings() {
   if (!manualList || !appState) return;
 
   const activities = getActivities();
-  manualList.innerHTML = '';
+  clearChildren(manualList);
 
   for (const actDef of activities) {
     const act = (appState.activities && appState.activities[actDef.id]) || { currentStreak: 0, longestStreak: 0 };
@@ -441,27 +583,54 @@ function renderSettings() {
 
     const row = document.createElement('div');
     row.className = 'manual-streak-row';
-    row.innerHTML = `
-      <div class="manual-streak-info">
-        <span>${actDef.icon}</span>
-        <div>
-          <div class="manual-streak-name">${actDef.name}</div>
-          <div style="font-size: 10px; color: var(--text-muted);">Best: ${act.longestStreak || act.currentStreak} ${unit}</div>
-        </div>
-      </div>
-      <div class="manual-streak-controls">
-        <div class="counter-ctrl-wrap">
-          <button class="counter-btn dec-streak-btn" data-act-id="${actDef.id}">-</button>
-          <input type="number" min="0" class="manual-streak-input" data-act-id="${actDef.id}" value="${act.currentStreak || 0}">
-          <button class="counter-btn inc-streak-btn" data-act-id="${actDef.id}">+</button>
-        </div>
-        <span class="manual-streak-unit">${unit}</span>
-      </div>
-    `;
 
-    const decBtn = row.querySelector('.dec-streak-btn');
-    const incBtn = row.querySelector('.inc-streak-btn');
-    const input = row.querySelector('.manual-streak-input');
+    // Info
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'manual-streak-info';
+
+    const iconSpan = document.createElement('span');
+    iconSpan.textContent = actDef.icon;
+    infoDiv.appendChild(iconSpan);
+
+    const nameCol = document.createElement('div');
+
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'manual-streak-name';
+    nameDiv.textContent = actDef.name;
+    nameCol.appendChild(nameDiv);
+
+    const bestDiv = document.createElement('div');
+    bestDiv.style.fontSize = '10px';
+    bestDiv.style.color = 'var(--text-muted)';
+    bestDiv.textContent = `Best: ${act.longestStreak || act.currentStreak} ${unit}`;
+    nameCol.appendChild(bestDiv);
+
+    infoDiv.appendChild(nameCol);
+    row.appendChild(infoDiv);
+
+    // Controls
+    const controlsDiv = document.createElement('div');
+    controlsDiv.className = 'manual-streak-controls';
+
+    const ctrlWrap = document.createElement('div');
+    ctrlWrap.className = 'counter-ctrl-wrap';
+
+    const decBtn = document.createElement('button');
+    decBtn.className = 'counter-btn dec-streak-btn';
+    decBtn.setAttribute('data-act-id', actDef.id);
+    decBtn.textContent = '-';
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '0';
+    input.className = 'manual-streak-input';
+    input.setAttribute('data-act-id', actDef.id);
+    input.value = String(act.currentStreak || 0);
+
+    const incBtn = document.createElement('button');
+    incBtn.className = 'counter-btn inc-streak-btn';
+    incBtn.setAttribute('data-act-id', actDef.id);
+    incBtn.textContent = '+';
 
     decBtn.addEventListener('click', async () => {
       const current = parseInt(input.value, 10) || 0;
@@ -479,6 +648,17 @@ function renderSettings() {
       await handleManualStreakChange(actDef.id, next);
     });
 
+    ctrlWrap.appendChild(decBtn);
+    ctrlWrap.appendChild(input);
+    ctrlWrap.appendChild(incBtn);
+    controlsDiv.appendChild(ctrlWrap);
+
+    const unitSpan = document.createElement('span');
+    unitSpan.className = 'manual-streak-unit';
+    unitSpan.textContent = unit;
+    controlsDiv.appendChild(unitSpan);
+
+    row.appendChild(controlsDiv);
     manualList.appendChild(row);
   }
 }
