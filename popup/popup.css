@@ -720,6 +720,70 @@ body {
   border-bottom: 1px solid rgba(51, 65, 85, 0.5);
 }
 
+.section-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.manual-streaks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.manual-streak-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background-color: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+.manual-streak-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.manual-streak-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.manual-streak-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.manual-streak-input {
+  width: 50px;
+  padding: 4px 6px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--aws-orange);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+}
+
+.manual-streak-input:focus {
+  border-color: var(--aws-orange);
+}
+
+.manual-streak-unit {
+  font-size: 11px;
+  color: var(--text-muted);
+  min-width: 35px;
+}
+
 .setting-row:last-child {
   border-bottom: none;
 }

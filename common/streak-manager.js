@@ -297,6 +297,72 @@
   }
 
   /**
+   * Manually set an activity's streak and completed status
+   */
+  function setActivityStreak(state, activityId, streakCount, isCompletedToday = null, now = new Date()) {
+    checkAndResetStreaks(state, now);
+
+    const actDef = getActivities().find(a => a.id === activityId);
+    if (!actDef) return { success: false, error: 'Activity not found' };
+
+    let act = state.activities[activityId];
+    if (!act) {
+      act = {
+        id: activityId,
+        currentStreak: 0,
+        longestStreak: 0,
+        lastCompletedDate: null,
+        previousCompletedDate: null,
+        history: []
+      };
+      state.activities[activityId] = act;
+    }
+
+    const val = Math.max(0, parseInt(streakCount, 10) || 0);
+    act.currentStreak = val;
+    act.longestStreak = Math.max(act.longestStreak || 0, val);
+
+    const isDaily = actDef.period === 'daily';
+    const currentKey = isDaily ? getLocalDateKey(now) : getWeekMondayKey(now);
+    const unlockedBadges = [];
+
+    if (isCompletedToday !== null) {
+      if (isCompletedToday) {
+        act.lastCompletedDate = currentKey;
+        if (!Array.isArray(act.history)) act.history = [];
+        if (!act.history.includes(currentKey)) {
+          act.history.push(currentKey);
+          if (act.history.length > 120) act.history.shift();
+        }
+      } else {
+        if (act.lastCompletedDate === currentKey) {
+          act.lastCompletedDate = act.previousCompletedDate || null;
+        }
+        if (Array.isArray(act.history)) {
+          act.history = act.history.filter(k => k !== currentKey);
+        }
+      }
+    }
+
+    // Check milestones
+    if (actDef.milestones && act.currentStreak > 0) {
+      for (const m of actDef.milestones) {
+        const target = m.days || m.weeks;
+        if (act.currentStreak >= target) {
+          const res = unlockBadge(state, m.badgeId, now);
+          if (res.unlocked) unlockedBadges.push(res.badge);
+        }
+      }
+    }
+
+    return {
+      success: true,
+      activity: act,
+      unlockedBadges
+    };
+  }
+
+  /**
    * Update badge progress or completion manually
    */
   function updateBadge(state, badgeId, updates, now = new Date()) {
@@ -429,6 +495,7 @@
     checkAndResetStreaks,
     unlockBadge,
     toggleActivity,
+    setActivityStreak,
     updateBadge,
     dismissAlert,
     clearDismissedAlerts,

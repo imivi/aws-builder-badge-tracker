@@ -135,6 +135,19 @@ test('Manual badge updates (counter and checkbox)', () => {
   assert.equal(state.badges['first-wish'].completed, true);
 });
 
+test('Manual streak override via setActivityStreak', () => {
+  const state = StreakManager.createInitialState();
+  const day = new Date('2026-10-18T12:00:00');
+
+  const res = StreakManager.setActivityStreak(state, 'daily_visit', 7, true, day);
+  assert.equal(res.success, true);
+  assert.equal(state.activities.daily_visit.currentStreak, 7);
+  assert.equal(state.activities.daily_visit.longestStreak, 7);
+  assert.equal(res.unlockedBadges.length, 1);
+  assert.equal(res.unlockedBadges[0].id, '7-day-visit-streak');
+  assert.equal(state.badges['7-day-visit-streak'].completed, true);
+});
+
 test('Summary calculation', () => {
   const state = StreakManager.createInitialState();
   const today = new Date('2026-10-18T12:00:00');

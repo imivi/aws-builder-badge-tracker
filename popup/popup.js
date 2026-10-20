@@ -427,6 +427,81 @@ function renderSettings() {
     if (notifToggle) notifToggle.checked = appState.settings.notificationsEnabled !== false;
     if (autoVisitToggle) autoVisitToggle.checked = appState.settings.autoVisitDetection !== false;
   }
+
+  // Render Manual Streaks Adjustment list
+  const manualList = document.getElementById('manual-streaks-list');
+  if (!manualList || !appState) return;
+
+  const activities = getActivities();
+  manualList.innerHTML = '';
+
+  for (const actDef of activities) {
+    const act = (appState.activities && appState.activities[actDef.id]) || { currentStreak: 0, longestStreak: 0 };
+    const unit = actDef.period === 'daily' ? 'days' : 'weeks';
+
+    const row = document.createElement('div');
+    row.className = 'manual-streak-row';
+    row.innerHTML = `
+      <div class="manual-streak-info">
+        <span>${actDef.icon}</span>
+        <div>
+          <div class="manual-streak-name">${actDef.name}</div>
+          <div style="font-size: 10px; color: var(--text-muted);">Best: ${act.longestStreak || act.currentStreak} ${unit}</div>
+        </div>
+      </div>
+      <div class="manual-streak-controls">
+        <div class="counter-ctrl-wrap">
+          <button class="counter-btn dec-streak-btn" data-act-id="${actDef.id}">-</button>
+          <input type="number" min="0" class="manual-streak-input" data-act-id="${actDef.id}" value="${act.currentStreak || 0}">
+          <button class="counter-btn inc-streak-btn" data-act-id="${actDef.id}">+</button>
+        </div>
+        <span class="manual-streak-unit">${unit}</span>
+      </div>
+    `;
+
+    const decBtn = row.querySelector('.dec-streak-btn');
+    const incBtn = row.querySelector('.inc-streak-btn');
+    const input = row.querySelector('.manual-streak-input');
+
+    decBtn.addEventListener('click', async () => {
+      const current = parseInt(input.value, 10) || 0;
+      const next = Math.max(0, current - 1);
+      await handleManualStreakChange(actDef.id, next);
+    });
+
+    incBtn.addEventListener('click', async () => {
+      const current = parseInt(input.value, 10) || 0;
+      await handleManualStreakChange(actDef.id, current + 1);
+    });
+
+    input.addEventListener('change', async () => {
+      const next = Math.max(0, parseInt(input.value, 10) || 0);
+      await handleManualStreakChange(actDef.id, next);
+    });
+
+    manualList.appendChild(row);
+  }
+}
+
+async function handleManualStreakChange(activityId, newStreak) {
+  const sm = getStreakMgr();
+  if (!sm || !appState) return;
+
+  const res = sm.setActivityStreak(appState, activityId, newStreak, null, new Date());
+  await persistState();
+
+  if (res.unlockedBadges && res.unlockedBadges.length > 0) {
+    for (const b of res.unlockedBadges) {
+      if (browserAPI && browserAPI.runtime && browserAPI.runtime.sendMessage) {
+        browserAPI.runtime.sendMessage({
+          type: 'NOTIFY_BADGE_UNLOCKED',
+          badge: b
+        });
+      }
+    }
+  }
+
+  renderAll();
 }
 
 /* =========================================================
